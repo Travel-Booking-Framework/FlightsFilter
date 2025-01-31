@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -124,3 +125,51 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# تعیین سطح لاگینگ بر اساس متغیر محیطی (پیش‌فرض: INFO)
+LOG_LEVEL = os.environ.get('DJANGO_LOG_LEVEL', 'INFO')
+
+# مسیر فایل لاگ (با استفاده از متغیر محیطی یا مسیر پیش‌فرض)
+LOG_FILE_PATH = os.environ.get('DJANGO_LOG_FILE', os.path.join(BASE_DIR, 'logs', 'django.log'))
+
+# ایجاد دایرکتوری لاگ‌ها در صورت عدم وجود
+os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': LOG_LEVEL,
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'DEBUG',  # ذخیره همه پیام‌ها در فایل لاگ
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_FILE_PATH,
+            'maxBytes': 5 * 1024 * 1024,  # حداکثر ۵ مگابایت برای هر فایل
+            'backupCount': 5,  # نگهداری ۵ فایل پشتیبان
+            'formatter': 'verbose',
+            'encoding': 'utf8',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': LOG_LEVEL,
+            'propagate': True,
+        },
+    },
+}
