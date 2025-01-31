@@ -94,27 +94,26 @@ class DepartureTimeFilter(FilterStrategy):
 
 
 # Advanced Filters for Step 2
-class PriceFilter:
-    def apply_filter(self, flights, min_price=None, max_price=None):
+# Advanced Filters for Step 2 (Merged into one class)
+class AdvancedFlightFilters:
+    @staticmethod
+    def filter_by_price(flights, min_price=None, max_price=None):
         if min_price:
             flights = [f for f in flights if f.final_price >= min_price]
         if max_price:
             flights = [f for f in flights if f.final_price <= max_price]
         return flights
 
-
-class FastestFlightFilter:
-    def apply_filter(self, flights):
+    @staticmethod
+    def filter_fastest_flight(flights):
         return min(flights, key=lambda f: (f.arrival_datetime - f.departure_datetime))
 
-
-class EarliestFlightFilter:
-    def apply_filter(self, flights):
+    @staticmethod
+    def filter_earliest_flight(flights):
         return min(flights, key=lambda f: f.departure_datetime)
 
-
-class LatestFlightFilter:
-    def apply_filter(self, flights):
+    @staticmethod
+    def filter_latest_flight(flights):
         return max(flights, key=lambda f: f.departure_datetime)
 
 
@@ -135,8 +134,8 @@ class FlightsQuery(ObjectType):
     )
 
     def resolve_flights(self, info, departure_airport=None, arrival_airport=None, departure_date=None,
-                         aircraft_capacity=None, min_price=None, max_price=None, baggage_limit=None,
-                         airline_name=None, departure_time=None, filter_by=None):
+                        aircraft_capacity=None, min_price=None, max_price=None, baggage_limit=None,
+                        airline_name=None, departure_time=None, filter_by=None):
         client = Elasticsearch()
         search = ElasticsearchSearch(using=client, index="flights")
 
@@ -199,8 +198,7 @@ class FlightsQuery(ObjectType):
         departure_times = list(set([flight.departure_time for flight in flights]))
 
         # Apply dynamic price filter
-        price_filter = PriceFilter()
-        flights = price_filter.apply_filter(flights, min_price, max_price)
+        flights = AdvancedFlightFilters.filter_by_price(flights, min_price, max_price)
 
         # Apply dynamic filters for baggage_limit, airline_name, and departure_time
         flights = BaggageLimitFilter().apply_filter(flights, baggage_limit) if baggage_limit else flights
@@ -209,13 +207,13 @@ class FlightsQuery(ObjectType):
 
         # Apply dynamic filters for fastest, earliest, or latest flights
         advanced_filters_map = {
-            "fastest": FastestFlightFilter(),
-            "earliest": EarliestFlightFilter(),
-            "latest": LatestFlightFilter()
+            "fastest": AdvancedFlightFilters.filter_fastest_flight,
+            "earliest": AdvancedFlightFilters.filter_earliest_flight,
+            "latest": AdvancedFlightFilters.filter_latest_flight
         }
 
         if filter_by in advanced_filters_map:
-            flights = advanced_filters_map[filter_by].apply_filter(flights)
+            flights = advanced_filters_map[filter_by](flights)
 
         # Returning the filtered flights along with the extracted lists
         return {
@@ -225,5 +223,3 @@ class FlightsQuery(ObjectType):
             "cabin_types": cabin_types,
             "departure_times": departure_times
         }
-
-
