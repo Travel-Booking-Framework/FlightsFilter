@@ -84,6 +84,9 @@ ELASTICSEARCH_DSL = {
     },
 }
 
+GRAPHENE = {
+    'SCHEMA': 'FlightsFilter.schema.schema',  # مسیر به فایل `schema.py` خود
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
