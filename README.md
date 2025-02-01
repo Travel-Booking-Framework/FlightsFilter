@@ -46,6 +46,7 @@
 - **FFilter/**: Contains the core settings and configurations for Django.
 - **FlightsFilter/**: Manages flight-related operations and filtering functionalities.
 - **Class-Diagram/**: Provides class diagrams for understanding the project architecture.
+- **logs/**: Contains logs files.
 
 ## Contribution Guidelines
 
