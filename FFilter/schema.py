@@ -42,7 +42,7 @@ class FlightType(graphene.ObjectType):
     arrival_airport = graphene.Field(AirportType)
     airline = graphene.Field(AirlineType)
     aircraft = graphene.Field(AircraftType)
-    baggage_limit_kg = graphene.Float()
+    baggage_limit_kg = graphene.Decimal()
     cabin_type = graphene.String()
 
 
